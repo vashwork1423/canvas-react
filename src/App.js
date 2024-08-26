@@ -88,6 +88,18 @@ function App() {
         });
       }
 
+      // Создание маленького круга (пули) из круга 2 в сторону круга 1
+      if (Math.random() < 0.02) { // Создавать пулю с некоторой вероятностью
+        const angle = Math.atan2(circle1.y - circle2.y, 150 - 650);
+        bulletsRef.current.push({
+          x: 650,
+          y: circle2.y,
+          dx: Math.cos(angle) * bulletSpeed,
+          dy: Math.sin(angle) * bulletSpeed,
+          color: 'blue',
+        });
+      }
+
       // Обновляем и рисуем пули
       bulletsRef.current = bulletsRef.current.filter(bullet => {
         bullet.x += bullet.dx;
