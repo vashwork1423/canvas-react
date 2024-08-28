@@ -14,6 +14,9 @@ function App() {
 
   const [speed1, setSpeed1] = useState(0.5);
   const [speed2, setSpeed2] = useState(0.5);
+  const [menu, setMenu] = useState({ open: false, x: 0, y: 0, circle: null });
+
+  const colors = ['red', 'green', 'blue', 'yellow', 'purple'];
 
   useEffect(() => {
     speed1Ref.current = speed1;
@@ -82,6 +85,10 @@ function App() {
       return distance < 2 * bulletRadius;
     }
 
+    function handleCircleClick(circle, x, y) {
+      setMenu({ open: true, x, y, circle });
+    }
+
     function animate(timestamp) {
       const deltaTime = timestamp - lastTimestamp;
       lastTimestamp = timestamp;
@@ -113,7 +120,7 @@ function App() {
           y: circle1.y,
           dx: Math.cos(angle) * bulletSpeed,
           dy: Math.sin(angle) * bulletSpeed,
-          color: 'red',
+          color: circle1.color,
         });
       }
 
@@ -124,7 +131,7 @@ function App() {
           y: circle2.y,
           dx: Math.cos(angle) * bulletSpeed,
           dy: Math.sin(angle) * bulletSpeed,
-          color: 'blue',
+          color: circle2.color,
         });
       }
 
@@ -132,19 +139,19 @@ function App() {
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
 
-        const hitCircle1 = bullet.color === 'blue' && checkCollision(bullet, 150, circle1.y);
-        const hitCircle2 = bullet.color === 'red' && checkCollision(bullet, 650, circle2.y);
+        const hitCircle1 = bullet.color !== circle1.color && checkCollision(bullet, 150, circle1.y);
+        const hitCircle2 = bullet.color !== circle2.color && checkCollision(bullet, 650, circle2.y);
 
         if (hitCircle2) {
           circle1.color = 'orange';
           circle1.score += 1;
-          setTimeout(() => (circle1.color = 'red'), 200);
+          setTimeout(() => (circle1.color = circle1Ref.current.color), 200);
         }
 
         if (hitCircle1) {
           circle2.color = 'orange';
           circle2.score += 1;
-          setTimeout(() => (circle2.color = 'blue'), 200);
+          setTimeout(() => (circle2.color = circle2Ref.current.color), 200);
         }
 
         let hitOtherBullet = false;
@@ -163,6 +170,18 @@ function App() {
         return false;
       });
 
+      ctx.canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (x >= 150 - radius && x <= 150 + radius && y >= circle1.y - radius && y <= circle1.y + radius) {
+          handleCircleClick(circle1Ref.current, e.clientX, e.clientY);
+        } else if (x >= 650 - radius && x <= 650 + radius && y >= circle2.y - radius && y <= circle2.y + radius) {
+          handleCircleClick(circle2Ref.current, e.clientX, e.clientY);
+        }
+      });
+
       drawCircle(150, circle1.y, circle1.color);
       drawCircle(650, circle2.y, circle2.color);
 
@@ -174,6 +193,13 @@ function App() {
 
     requestAnimationFrame(animate);
   }, []); // Убираем зависимость от speed1 и speed2
+
+  function handleColorSelect(color) {
+    if (menu.circle) {
+      menu.circle.color = color;
+    }
+    setMenu({ ...menu, open: false });
+  }
 
   return (
     <div className="App">
@@ -202,6 +228,17 @@ function App() {
           />
         </div>
       </div>
+
+      {menu.open && (
+        <div className="menu" style={{ position: 'absolute', left: menu.x, top: menu.y, background: 'white', border: '1px solid black', padding: '10px' }}>
+          <p>Select a color:</p>
+          {colors.map((color) => (
+            <button key={color} onClick={() => handleColorSelect(color)} style={{ backgroundColor: color, margin: '5px' }}>
+              {color}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
